@@ -21,6 +21,7 @@ def sender(args):
     if message is None:
         for i in range(count):
             results.append(send(IP(dst=dest)/ICMP(), return_packets=True))
+            time.sleep(args.interval)
     else:
         key = args.key
         if key is not None:
@@ -37,6 +38,7 @@ def sender(args):
             chunks.append(message)
         for chunk in chunks:
             results.append(send(IP(dst=dest)/ICMP()/chunk, return_packets=True))
+            time.sleep(args.interval)
         results.append(send(IP(dst=dest)/ICMP(), return_packets=True))
 
     for result in results:
