@@ -6,6 +6,11 @@ Requires:
 * Scapy
 * cryptography
 
+# Installation
+
+` pip install exping `
+
+
 # Usage:
 ```
 usage: exping [-h] [-m MSG] [-a ADDRESS] [-c COUNT] [-i INTERVAL] [-k KEY] [-d] [-e] [-s MAX_SIZE]
