@@ -2,8 +2,6 @@ from exping import functions
 
 import argparse
 
-if __name__ == "__main__":
-    main()
 
 def main():
     parser = argparse.ArgumentParser(description="CLI util to send msgs in ping")
@@ -16,6 +14,7 @@ def main():
     parser.add_argument("-e", "--encrypt", help="Encrypt the message", action="store_true")
     parser.add_argument("-s", "--max_size", help="Max size of the message", type=int, default=65500)
     parser.add_argument("-t", "--type", help="Receiver or Sender, case insensitive", choices=["receiver", "sender"], type=str.lower, default="sender")
+    parser.add_argument("-f", "--file", help="File to send/receive", type=str, default=None)
 
     args = parser.parse_args()
 
@@ -27,6 +26,10 @@ def main():
     if args.address is None:
         parser.error("You need to provide an address to send/listen the ping")
         parser.print_help()
+    if args.file is not None and args.msg is not None:
+        parser.error("You can't send a file and a message at the same time")
 
     functions.main(args)
 
+if __name__ == "__main__":
+    main()

@@ -15,15 +15,16 @@ def main(args):
 
 def sender(args):
     message = args.msg
+    target_file = args.file
     results = []
     dest = args.address
     count = args.count
-    if message is None:
+    key = args.key
+    if message is None and target_file is None:
         for i in range(count):
             results.append(send(IP(dst=dest)/ICMP(), return_packets=True))
             time.sleep(args.interval)
-    else:
-        key = args.key
+    elif message is not None and target_file is None: 
         if key is not None:
             key = key.encode()
         message = setup_message(message, key)
@@ -36,10 +37,26 @@ def sender(args):
                 chunks.append(message[i:i + args.max_size])
         else:
             chunks.append(message)
-        for chunk in chunks:
-            results.append(send(IP(dst=dest)/ICMP()/chunk, return_packets=True))
-            time.sleep(args.interval)
-        results.append(send(IP(dst=dest)/ICMP(), return_packets=True))
+    elif message is None and target_file is not None:
+        with open(target_file, "rb") as f:
+            message = f.read()
+        if key is not None:
+            key = key.encode()
+        message = setup_message(message, key)
+        if not isinstance(message, bytes):
+            message = message.encode()
+        size = len(message)
+        chunks = []
+        if size > args.max_size:
+            for i in range(0, size, args.max_size):
+                chunks.append(message[i:i + args.max_size])
+        else:
+            chunks.append(message)
+        
+    for chunk in chunks:
+        results.append(send(IP(dst=dest)/ICMP()/chunk, return_packets=True))
+        time.sleep(args.interval)
+    results.append(send(IP(dst=dest)/ICMP(), return_packets=True))
 
     for result in results:
         if len(result) == 0:
@@ -57,7 +74,9 @@ def setup_message(message, key=None):
             iterations=480000,
         )
         key = Fernet(base64.urlsafe_b64encode(kdf.derive(key)))
-        message = key.encrypt(message.encode())
+        if isinstance(message, str):
+            message = message.encode()
+        message = key.encrypt(message)
         message = salt + message
     return message
 
@@ -86,7 +105,11 @@ def receiver(args):
     data = b"".join(results)
     if key is not None:
         data = decrypt(data, key)
-    print(data)
+    if args.file is not None:
+        with open(args.file, "wb") as f:
+            f.write(data)
+    else:
+        print(data)
     return "Message received"
 
 def process(packet, results, key):
